@@ -123,7 +123,7 @@ for i, doc in enumerate(retrieved_docs, 1):
     if len(doc.page_content) > 200:
         content_preview += "..."
     print(f"  内容: {content_preview}")
-    
+
     # 如果文档有元数据（如来源URL），则显示
     if hasattr(doc, "metadata") and doc.metadata:
         print(f"  来源: {doc.metadata}")

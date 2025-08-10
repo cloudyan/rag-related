@@ -134,6 +134,108 @@ Linux/MacOS 系统安装步骤：
    pip install -r requirements_XXX.txt
    ```
 
+   7) 平台兼容性与常见问题（macOS 上安装失败）
+   - 现象：在 macOS 上运行 `uv pip install -r src/00-simple-rag/requirements.txt` 报错，提示 `triton==x.y.z` 无可用 wheel 或 `nvidia-*` 包解析失败。
+   - 原因：`triton` 与大多数 `nvidia-*` CUDA 相关包仅提供 Linux x86_64 的 wheel，不支持 macOS（含 arm64）。
+   - 解决：已将 `src/00-simple-rag/requirements.txt` 中相关包加上平台条件，仅在 Linux x86_64 安装。
+     - 如仍有缓存导致解析旧规则，可先清缓存再装：
+       ```bash
+       uv cache clean
+       uv pip sync -r src/00-simple-rag/requirements.txt
+       ```
+
+### 5. 运行项目
+
+1) 先决条件
+```bash
+# 进入项目根目录并启用 Conda 环境
+cd /Volumes/data/code/github.com/cloudyan/rag-related
+conda activate rag
+
+# 确保依赖就绪（推荐使用 uv，同步到与 requirements 完全一致）
+uv pip sync -r src/00-simple-rag/requirements.txt --python "$(which python)"
+```
+
+2) 配置环境变量与模型
+- DeepSeek 示例需要环境变量：`DEEPSEEK_API_KEY`
+  - 方式A（推荐，三个示例通用，尤其是 LangGraph 示例未自动加载 .env）：
+    ```bash
+    export DEEPSEEK_API_KEY="你的DeepSeek密钥"
+    ```
+  - 方式B（仅对加载了 dotenv 的脚本生效，如 `01_langchain_deepseek.py`、`02_langchain_ollama.py`）：在项目根目录创建 `.env` 文件：
+    ```bash
+    echo 'DEEPSEEK_API_KEY=你的DeepSeek密钥' > .env
+    ```
+- Ollama 示例需要本地模型可用：
+  ```bash
+  # 安装并启动 Ollama 服务
+  # 仅首次：curl -fsSL https://ollama.com/install.sh | sh  （或见前文安装章节）
+  ollama serve &
+
+  # 拉取模型（示例：qwen2.5 7B）
+  ollama pull qwen2.5:7b
+  ```
+
+3) 运行示例
+- 01 LangChain + DeepSeek
+  ```bash
+  python src/00-simple-rag/01_langchain_deepseek.py
+  ```
+
+- 02 LangChain + Ollama（本地大模型）
+  ```bash
+  # 确保 ollama serve 已启动、模型已拉取
+  python src/00-simple-rag/02_langchain_ollama.py
+  ```
+
+- 03 LangGraph + DeepSeek
+  ```bash
+  # 注意：本脚本未调用 dotenv，请确保已通过 export 设置 DEEPSEEK_API_KEY
+
+  python src/00-simple-rag/03_langgraph_deepseek.py
+
+  # 稳健方式（不受 shell PATH 干扰）：
+  conda run -n rag python src/00-simple-rag/03_langgraph_deepseek.py
+  ```
+
+4) 可能的下载与网络说明
+- 首次运行会自动从 HuggingFace 下载中文嵌入模型 `BAAI/bge-small-zh`。如网络受限，可配置国内镜像或手动预下载。
+- 可选：为 Python 安装走国内源，见前文 uv/pip 镜像参数；为 Git/HF 下载设置代理则请按需配置。
+
+5) 常见问题
+- 提示缺少 `DEEPSEEK_API_KEY`：请按上文导出环境变量或在 `.env` 中配置（但 LangGraph 脚本需 export）。
+- 本地模型未找到或连接超时：确认 `ollama serve` 已运行，且 `ollama list` 能看到 `qwen2.5:7b`；必要时增加脚本中的 `request_timeout`。
+- 依赖安装失败（macOS）：已处理 `triton`/`nvidia-*` 平台条件；若仍异常，执行 `uv cache clean` 后重试。
+
+6) 确保使用正确 Python 版本（Conda 环境绑定）
+- 现象：已 `conda activate rag`，`python --version` 仍显示 3.13.x（或非 3.11）。
+- 原因：shell 未正确加载 Conda Hook、PATH 前有其他 Python（如 pyenv/brew）覆盖。
+- 排查与修复：
+  ```bash
+  # 查看当前使用的 python 路径，应为 /opt/anaconda3/envs/rag/bin/python（以你本机路径为准）
+  which python
+  python -c "import sys; print(sys.executable, sys.version)"
+
+  # 若不对：
+  conda deactivate
+  conda init zsh && exec $SHELL  # 重新初始化 zsh 并新开会话
+  conda activate rag
+
+  # 仍不对时，使用稳健方式运行或安装：
+  conda run -n rag python --version
+  uv pip sync -r src/00-simple-rag/requirements.txt --python \
+    "$(conda run -n rag which python)"
+  conda run -n rag python src/00-simple-rag/03_langgraph_deepseek.py
+  ```
+  可选：检查 `~/.zshrc` 中 `eval "$(/opt/anaconda3/bin/conda shell.zsh hook)"` 是否存在且位于可能覆盖 PATH 的工具（如 pyenv init）之后。
+### 5. 运行项目
+
+
+
+```bash
+
+```
+
 ## 二、基础大模型
 
 ### 1. 通过API访问云端商业模型
