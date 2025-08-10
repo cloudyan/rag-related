@@ -23,7 +23,7 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # Linux
    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-   
+
    # MacOS
    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
    ```
@@ -32,7 +32,7 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # Linux
    bash Miniconda3-latest-Linux-x86_64.sh
-   
+
    # MacOS
    bash Miniconda3-latest-MacOSX-x86_64.sh
    ```
@@ -47,10 +47,10 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # 验证 conda 版本
    conda --version
-   
+
    # 验证 conda 环境
    conda info
-   
+
    # 更新 conda 到最新版本
    conda update conda
    ```
@@ -59,17 +59,78 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # 创建新的虚拟环境
    conda create -n rag python=3.11
-   
+
    # 激活虚拟环境
    conda activate rag
-   
+
    # 查看当前环境列表
    conda env list
    ```
 
-### 4. 安装项目依赖
+### 4. 安装项目依赖（Conda + uv 推荐）
+   本项目推荐：用 Conda 管理 Python 版本与虚拟环境，用 uv 进行极速依赖安装与同步；同时保留 pip 作为兜底方案。
+
+   1) 在 macOS 安装 uv（一次性）
    ```bash
-   # 进入项目依赖requirements_XXX.txt所在目录执行
+   # 安装脚本（macOS / Linux 通用）
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # 将 uv 添加到 PATH（如安装提示中未自动添加，可手动追加）
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+
+   # 验证
+   uv --version
+   ```
+   也可使用 Homebrew 安装：
+   ```bash
+   brew install uv
+   ```
+
+   2) 在 Conda 环境中使用 uv 安装依赖
+   ```bash
+   # 先激活 Conda 环境
+   conda activate rag
+
+   # 针对项目中具体的 requirements 文件安装（示例）
+   uv pip install -r src/00-simple-rag/requirements.txt
+
+   # 如果你在其它子模块目录下有自定义文件（命名形如 requirements_XXX.txt），可按需安装
+   uv pip install -r requirements_XXX.txt
+
+   # 如遇 uv 未正确识别 Conda 当前解释器，可显式指定
+   uv pip install -r src/00-simple-rag/requirements.txt --python "$(which python)"
+   ```
+
+   3) 使用国内镜像（可选，按需添加）
+   ```bash
+   # 临时为当前安装指定镜像（清华镜像示例）
+   uv pip install -r src/00-simple-rag/requirements.txt \
+     -i https://pypi.tuna.tsinghua.edu.cn/simple
+   ```
+
+   4) 同步环境（确保环境与 requirements 完全一致）
+   ```bash
+   # 会卸载环境中多余包，仅保留 requirements 中声明的包
+   uv pip sync -r src/00-simple-rag/requirements.txt
+   ```
+
+   5) 常用操作
+   ```bash
+   # 升级到文件内可解析到的最新版本范围
+   uv pip install -U -r src/00-simple-rag/requirements.txt
+
+   # 查看当前环境已安装包（与 pip list 一致）
+   uv pip list
+
+   # 如需在非 Conda 场景下创建虚拟环境（可选，使用 Conda 时无需执行）
+   uv venv .venv && source .venv/bin/activate
+   ```
+
+   6) pip 兜底方案（若 uv 不可用）
+   ```bash
+   # 进入相应 requirements 文件所在路径或直接用相对路径
+   pip install -r src/00-simple-rag/requirements.txt
+   # 或
    pip install -r requirements_XXX.txt
    ```
 
@@ -81,16 +142,16 @@ Linux/MacOS 系统安装步骤：
   - [https://www.apiyi.com/](https://www.apiyi.com/)
   - [https://2233.ai/api](https://2233.ai/api)
   - [https://www.eylink.cn/](https://www.eylink.cn/)
-    
+
     如果是自己购买的三方openai代理, 诸如在 https://www.apiyi.com/ 上购买的，可以用
       ``` python
          from openai import OpenAI
-         
+
          client = OpenAI(
              api_key="YOUR_API_KEY",
              base_url="https://vip.apiyi.com/v1"
          )
-         
+
          completion = client.chat.completions.create(
              model="gpt-4o",
              messages=[
@@ -115,19 +176,19 @@ Linux/MacOS 系统安装步骤：
    ``` python
       # OpenAI 客户端调用
       from openai import Client
-      
+
       # 创建 OpenAI 客户端
       openai = OpenAI()
-      
+
       # OpenAI API调用（代理方式）
       openai = OpenAI(
-           api_key="XXX", 
+           api_key="XXX",
            base_url="https://vip.apiyi.com/v1"
       )
-      
+
       # 阿里云百炼大模型
       client = OpenAI(
-         api_key="sk-xxx", 
+         api_key="sk-xxx",
          base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
       )
 
@@ -140,13 +201,13 @@ Linux/MacOS 系统安装步骤：
       )
       print(response.choices[0].message.content)
 
-      
+
       # DeepSeek API调用（deepseek-chat）
       client = OpenAI(
            api_key="XXX",
            base_url="https://api.deepseek.com"
       )
-      
+
       response = client.chat.completions.create(
 	      model="deepseek-chat",
 	      messages=[
@@ -168,16 +229,16 @@ Linux/MacOS 系统安装步骤：
 
 ### 2. 基于Ollama部署本地开源大模型
    #### 1. 安装 Ollama
-   
+
    Windows 系统安装
    1. 下载 Ollama 安装包
       - 访问官方下载页面：https://ollama.com/download
       - 下载 Windows 版本的安装包
-   
+
    2. 运行安装程序
       - 双击下载的安装文件
       - 按照安装向导完成安装
-   
+
    3. 验证安装
       ```bash
       # 打开 PowerShell 或命令提示符，输入：
@@ -188,7 +249,7 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # 使用 curl 安装
    curl -fsSL https://ollama.com/install.sh | sh
-   
+
    # 验证安装
    ollama --version
    ```
@@ -210,7 +271,7 @@ Linux/MacOS 系统安装步骤：
    ```bash
    # 查看可用的模型版本
    ollama list
-   
+
    # 拉取适合的模型版本（示例）
    ollama pull qwen2.5:7b  # 标准版本
    ollama pull qwen2.5:7b-q4  # 量化版本
@@ -226,35 +287,35 @@ Linux/MacOS 系统安装步骤：
       ```bash
       # 启动 Ollama 服务
       ollama serve
-      
+
       # 在另一个终端中使用 curl 测试 API
       curl http://localhost:11434/api/generate -d '{
         "model": "qwen2.5:7b",
         "prompt": "你好，请介绍一下你自己"
       }'
       ```
-   
+
    #### 4. 常用参数配置
    - 运行参数
       ```bash
       # 使用特定参数运行模型
       ollama run qwen2.5:7b --temperature 0.7 --top-p 0.9
       ```
-   
+
    - 常用参数说明：
      - `--temperature`: 控制输出的随机性（0-1）
      - `--top-p`: 控制输出的多样性（0-1）
      - `--num-predict`: 控制生成的最大 token 数
-     - `--seed`: 设置随机种子，用于复现结果    
-   
+     - `--seed`: 设置随机种子，用于复现结果
+
    #### 5. 模型管理
       ```bash
       # 查看已安装的模型
       ollama list
-      
+
       # 删除模型
       ollama rm qwen2.5:7b
-      
+
       # 复制模型
       ollama cp qwen2.5:7b qwen2.5:7b-backup
       ```
@@ -263,7 +324,7 @@ Linux/MacOS 系统安装步骤：
    - 使用 Python 调用
      ```python
       import requests
-      
+
       def query_ollama(prompt):
           response = requests.post(
               'http://localhost:11434/api/generate',
@@ -273,7 +334,7 @@ Linux/MacOS 系统安装步骤：
               }
           )
           return response.json()
-      
+
       # 使用示例
       result = query_ollama("你好，请介绍一下你自己")
       print(result)
@@ -281,11 +342,11 @@ Linux/MacOS 系统安装步骤：
    - 使用 LangChain 集成
       ```python
       from langchain.llms import Ollama
-      
+
       llm = Ollama(model="qwen2.5:7b")
       response = llm("你好，请介绍一下你自己")
       print(response)
-      ``` 
+      ```
 
 ## 三、嵌入模型
 
@@ -308,7 +369,7 @@ Linux/MacOS 系统安装步骤：
       }'
 
    ```
-   
+
 ## 四、向量库
 
 ### 1. 安装Chroma
