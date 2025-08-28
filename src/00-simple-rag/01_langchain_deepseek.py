@@ -3,6 +3,10 @@ LangChain RAG智能问答系统 - DeepSeek版本
 使用传统的LangChain链式调用实现检索增强生成(RAG)
 包含文档加载、向量化、检索、生成等完整流程
 """
+
+# 执行
+# uv run python 01_langchain_deepseek.py
+
 # 第一步：索引阶段
 
 # 1. 加载文档
@@ -74,8 +78,10 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # 创建提示模板，定义大模型的角色和任务
 prompt = ChatPromptTemplate.from_template(
-    """基于以下上下文，请详细回答问题。如果上下文中没有相关信息，
-请说"我无法从提供的上下文中找到相关信息"。
+    """基于以下上下文，请详细回答问题。要求：
+1. 如果上下文中没有相关信息，请明确说明
+2. 如果上下文中有相关信息，请尽可能详细地提取和总结
+3. 回答要客观、准确，避免过度推断
 
 上下文: {context}
 
@@ -93,9 +99,9 @@ from langchain_deepseek import ChatDeepSeek  # 需要安装: pip install langcha
 # 初始化DeepSeek聊天模型
 llm = ChatDeepSeek(
     model="deepseek-chat",  # DeepSeek API 支持的聊天模型名称
-    temperature=0.7,  # 控制输出的随机性（0-1之间，越高越随机，越低越确定）
+    temperature=0.1,  # 控制输出的随机性（0-1之间，越高越随机，越低越确定）
     max_tokens=2048,  # 最大输出token数量，控制回答长度
-    api_key=os.getenv("DEEPSEEK_API_KEY"),  # 从环境变量加载API密钥
+    api_key=os.getenv("DEEPSEEK_API_KEY", ""),  # 从环境变量加载API密钥
 )
 
 # 使用提示模板格式化问题和上下文，然后调用大模型生成答案
