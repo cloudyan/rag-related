@@ -8,6 +8,23 @@ import os
 from typing import List
 from typing_extensions import TypedDict
 from langchain_core.documents import Document
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+# 调试：检查环境变量是否正确加载
+api_key = os.getenv("DEEPSEEK_API_KEY")
+print(f"API Key loaded: {'YES' if api_key else 'NO'}")
+print(f"API Key length: {len(api_key) if api_key else 0}")
+
+# LangSmith 是 LangChain 官方提供的应用监控和调试平台，用于：
+# 追踪 LLM 调用
+# 监控应用性能
+# 调试提示词
+# 分析模型响应
+# 不影响功能：这只是一个警告，不会阻止你的 RAG 系统运行
+# 禁用 LangSmith（推荐）
 
 # 1. 加载文档
 # 使用WebBaseLoader从网页加载文档内容
@@ -100,7 +117,7 @@ def generate(state: State) -> dict:
         model="deepseek-chat",                      # 使用deepseek-chat模型
         temperature=0.7,                            # 控制生成文本的随机性(0-1，越高越随机)
         max_tokens=2048,                           # 最大生成token数量
-        api_key=os.getenv("DEEPSEEK_API_KEY"),     # 从环境变量获取API密钥
+        api_key=os.getenv("DEEPSEEK_API_KEY", ""),     # 从环境变量获取API密钥
     )
 
     # 将检索到的文档内容拼接成上下文字符串
