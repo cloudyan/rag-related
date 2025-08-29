@@ -56,7 +56,7 @@ prompt = hub.pull("rlm/rag-prompt")  # 获取标准的RAG提示词模板
 class State(TypedDict):
     """
     LangGraph状态定义
-    
+
     Attributes:
         question: 用户输入的问题字符串
         context: 检索到的相关文档列表
@@ -70,10 +70,10 @@ class State(TypedDict):
 def retrieve(state: State) -> dict:
     """
     检索步骤：根据问题从向量存储中检索相关文档
-    
+
     Args:
         state: 当前状态，包含用户问题
-        
+
     Returns:
         dict: 包含检索到的文档的字典，键为"context"
     """
@@ -85,16 +85,16 @@ def retrieve(state: State) -> dict:
 def generate(state: State) -> dict:
     """
     生成步骤：基于检索到的文档和问题生成答案
-    
+
     Args:
         state: 当前状态，包含问题和检索到的上下文文档
-        
+
     Returns:
         dict: 包含生成答案的字典，键为"answer"
     """
     # 导入DeepSeek聊天模型
     from langchain_deepseek import ChatDeepSeek
-    
+
     # 初始化DeepSeek大语言模型
     llm = ChatDeepSeek(
         model="deepseek-chat",                      # 使用deepseek-chat模型
@@ -102,16 +102,16 @@ def generate(state: State) -> dict:
         max_tokens=2048,                           # 最大生成token数量
         api_key=os.getenv("DEEPSEEK_API_KEY"),     # 从环境变量获取API密钥
     )
-    
+
     # 将检索到的文档内容拼接成上下文字符串
     docs_content = "\n\n".join(doc.page_content for doc in state["context"])
-    
+
     # 使用提示词模板格式化问题和上下文
     messages = prompt.invoke({
-        "question": state["question"], 
+        "question": state["question"],
         "context": docs_content
     })
-    
+
     # 调用大语言模型生成答案
     response = llm.invoke(messages)
     return {"answer": response.content}  # 返回生成的答案，更新状态中的answer字段
