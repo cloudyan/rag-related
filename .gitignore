@@ -1,3 +1,7 @@
 .env
 output
 *.db
+
+
+__pycache__
+dist
