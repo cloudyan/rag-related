@@ -7,6 +7,8 @@ LangChain RAG智能问答系统 - DeepSeek版本
 # 执行
 # uv run python 01_langchain_deepseek.py
 
+
+
 # 第一步：索引阶段
 
 # 1. 加载文档
@@ -24,6 +26,8 @@ from langchain_community.document_loaders import WebBaseLoader
 loader = WebBaseLoader(web_paths=("https://zh.wikipedia.org/wiki/深度求索",))  # 深度求索的维基百科页面
 docs = loader.load()  # 执行加载操作，返回Document对象列表
 
+
+
 # 2. 文本分块
 # 导入递归字符文本分割器，用于将长文本切分成小块
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -35,6 +39,8 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 # 将加载的文本分割成多个小块，便于向量化和检索
 all_splits = text_splitter.split_documents(docs)
+
+
 
 # 3. 信息嵌入
 # 导入HuggingFace嵌入模型接口
@@ -50,6 +56,8 @@ embeddings = HuggingFaceEmbeddings(
     encode_kwargs={"normalize_embeddings": True},  # 启用向量归一化，提升相似度计算准确性
 )
 
+
+
 # 4. 向量存储
 # 导入内存向量存储，用于存储和检索文档向量
 from langchain_core.vectorstores import InMemoryVectorStore
@@ -60,17 +68,23 @@ vector_store = InMemoryVectorStore(embeddings)
 # 这一步会将所有文档块转换为向量并存储在内存中，用于后续的相似性搜索
 vector_store.add_documents(all_splits)
 
+
+
 # 第二步：检索阶段
 
 # 5. 构建用户查询
 # 定义要询问的问题（这里可以改为动态输入）
 question = "DeepSeek有哪些核心技术？"
 
+
+
 # 6. 在向量存储中搜索相关文档，并准备上下文内容
 # 使用余弦相似度搜索最相关的文档块
 retrieved_docs = vector_store.similarity_search(question, k=3)  # k=3表示检索前3个最相关的文档块
 # 将检索到的文档内容拼接成一个字符串，作为大模型的上下文
 docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
+
+
 
 # 7. 构建提示模板
 # 导入聊天提示模板，用于格式化用户问题和检索到的上下文
@@ -89,6 +103,8 @@ prompt = ChatPromptTemplate.from_template(
 
 回答:"""
 )
+
+
 
 # 第三步：生成阶段
 
